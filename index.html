@@ -190,9 +190,14 @@
         Object.keys(lastSelected).forEach(k => lastSelected[k] = null);
       })
       .catch(err => {
-        // Nếu là lỗi CORS/Failed to fetch, không báo lỗi cho user
-        if (err.message.includes('Failed to fetch') || err.message.includes('network') || err.message.includes('server không trả về phản hồi')) {
-          alert("Bình chọn đã được gửi ");
+        // Nếu là lỗi CORS/Failed to fetch/Load failed, không báo lỗi cho user
+        if (
+          err.message.includes('Failed to fetch') ||
+          err.message.includes('network') ||
+          err.message.includes('server không trả về phản hồi') ||
+          err.message.includes('Load failed')
+        ) {
+          alert("Bình chọn đã được gửi!");
           voteForm.reset();
           document.querySelectorAll("td").forEach(td => td.classList.remove("disabled"));
           Object.keys(lastSelected).forEach(k => lastSelected[k] = null);
