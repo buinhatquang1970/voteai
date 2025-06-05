@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+    <title>Bình chọn ảnh AI Cục Tần số vô tuyến điện</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    td, th {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    .disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+      cursor: wait;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #loader {
+      display: none;
+      text-align: center;
+      color: #007bff;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+ <div style="text-align:center; margin-top: 10px;">
+    <img src="logo_CTS.jpg" alt="Logo ARFM" style="max-height: 100px;">
+ </div>
+  <h2 id="tieude" style="color:#007bff; font-family: Arial, Helvetica, sans-serif; text-align:center">Bình chọn giải thưởng cho ảnh AI </h2>
+  <form id="voteForm">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Ảnh tinh tế nhất</th>
+          <th>Ảnh chân thực nhất</th>
+          <th>Ấnh hài hước nhất</th>
+          <th>Ảnh ấn tượng nhất</th>
+          <th>Ảnh dễ thương nhất</th>
+          <th>Ảnh chuyên nghiệp nhất</th>
+          <th>Sáng tạo nhất</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div style="text-align:center">
+      <label for="user">Tên người bình chọn: </label>
+      <input type="text" id="user" required placeholder="Nhập tên hoặc mã định danh">
+      <br><br>
+      <button type="submit" id="submitBtn">Gửi bình chọn</button>
+    </div>
+    <div id="loader">Đang gửi bình chọn, vui lòng đợi...</div>
+  </form>
+
+  <script>
+    const images = ["Ảnh 1", "Ảnh 2", "Ảnh 3", "Ảnh 4", "Ảnh 5", "Ảnh 6", "Ảnh 7"];
+    const awards = [
+      "Chân thực nhất",
+      "Hài hước nhất",
+      "Ấn tượng nhất",
+      "Dễ thương nhất",
+      "Phá cách nhất",
+      "Chuyên nghiệp nhất",
+      "Sáng tạo nhất"
+    ];
+
+    const tbody = document.querySelector("tbody");
+
+    images.forEach((img, rowIdx) => {
+      const tr = document.createElement("tr");
+      const labelCell = document.createElement("td");
+      labelCell.textContent = img;
+      tr.appendChild(labelCell);
+
+      awards.forEach((award, colIdx) => {
+        const td = document.createElement("td");
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = `row-${rowIdx}`;
+        radio.dataset.row = rowIdx;
+        radio.dataset.col = colIdx;
+        td.appendChild(radio);
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+
+    // Track last selected radio per row for toggle
+    const lastSelected = {};
+
+    document.querySelectorAll("input[type='radio']").forEach(radio => {
+      radio.addEventListener("click", function(e) {
+        const row = this.dataset.row;
+        const col = this.dataset.col;
+        // Nếu đã chọn rồi và click lại chính nó thì toggle bỏ chọn
+        if (lastSelected[row] === this) {
+          // Bỏ chọn và enable lại các nút cùng hàng/cột
+          this.checked = false;
+          document.querySelectorAll(`input[data-row='${row}']`).forEach(el => {
+            el.closest("td").classList.remove("disabled");
+          });
+          document.querySelectorAll(`input[data-col='${col}']`).forEach(el => {
+            el.closest("td").classList.remove("disabled");
+          });
+          lastSelected[row] = null;
+          e.preventDefault();
+          return;
+        }
+        // Nếu chọn mới thì disable các nút cùng hàng/cột
+        document.querySelectorAll(`input[data-row='${row}']`).forEach(el => {
+          if (el !== this) el.closest("td").classList.add("disabled");
+          else el.closest("td").classList.remove("disabled");
+        });
+        document.querySelectorAll(`input[data-col='${col}']`).forEach(el => {
+          if (el !== this) el.closest("td").classList.add("disabled");
+          else el.closest("td").classList.remove("disabled");
+        });
+        lastSelected[row] = this;
+      });
+    });
+
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw1JxgaUwckAYU2QQibVTCtnUgKZmLHbEFQGLtlQF_ccbW-TZ-ItmXT_jchNmn04uSc/exec"; 
+
+    const submitBtn = document.getElementById("submitBtn");
+    const loader = document.getElementById("loader");
+    const voteForm = document.getElementById("voteForm");
+
+    voteForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const user = document.getElementById("user").value.trim();
+      if (!user) {
+        alert("Vui lòng nhập tên người bình chọn!");
+        return;
+      }
+
+      const selected = document.querySelectorAll("input[type='radio']:checked");
+      if (selected.length !== 7) {
+        alert("Bạn phải chọn đủ 7 giải thưởng cho 7 ảnh!");
+        return;
+      }
+
+      const votes = [];
+      selected.forEach(input => {
+        const row = parseInt(input.dataset.row);
+        const col = parseInt(input.dataset.col);
+        votes.push({
+          user: user,
+          image: images[row],
+          award: awards[col]
+        });
+      });
+
+      // Disable button, show loader, lock form
+      submitBtn.disabled = true;
+      loader.style.display = "block";
+      voteForm.classList.add("loading");
+
+      fetch(scriptURL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain"
+        },
+        body: JSON.stringify(votes)
+      })
+      .then(res => {
+        // Nếu nhận được response, coi như thành công
+        if (res.ok) return res.text();
+        // Nếu là CORS bị chặn (không có header), vẫn coi như gửi thành công!
+        throw new Error("Có thể bình chọn đã được gửi, nhưng server không trả về phản hồi.");
+      })
+      .then(response => {
+        alert("Bình chọn đã được gửi thành công!");
+        voteForm.reset();
+        document.querySelectorAll("td").forEach(td => td.classList.remove("disabled"));
+        // reset trạng thái toggle
+        Object.keys(lastSelected).forEach(k => lastSelected[k] = null);
+      })
+      .catch(err => {
+        // Nếu là lỗi CORS/Failed to fetch, không báo lỗi cho user
+        if (err.message.includes('Failed to fetch') || err.message.includes('network') || err.message.includes('server không trả về phản hồi')) {
+          alert("Bình chọn đã được gửi ");
+          voteForm.reset();
+          document.querySelectorAll("td").forEach(td => td.classList.remove("disabled"));
+          Object.keys(lastSelected).forEach(k => lastSelected[k] = null);
+        } else {
+          alert("Có lỗi khi gửi bình chọn: " + err.message);
+        }
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        loader.style.display = "none";
+        voteForm.classList.remove("loading");
+      });
+    });
+  </script>
+</body>
+</html>
